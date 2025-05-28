@@ -7,7 +7,8 @@ from parser import process_zip_file
 from google_drive import upload_file_to_drive, create_shareable_link
 
 # =========== Bot Config ===========
-BOT_TOKEN = "7804596940:AAGEiCQI8UKyeLrQMJ-UpTHrsSDHJ2N8l90"  # Make sure to use env variable in production
+# Make sure to use env variable in production
+BOT_TOKEN = "7804596940:AAGEiCQI8UKyeLrQMJ-UpTHrsSDHJ2N8l90"
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 45 * 1024 * 1024  # 45MB
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 user_keywords = {}
 
 # =========== Command Handlers ===========
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 হ্যালো!\n"
@@ -34,6 +37,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "_Created by Nazmul Hasan Nahin_"
     )
 
+
 async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🔘 *বট এর ফিচার ও কমান্ডসমূহ:*\n\n"
@@ -44,8 +48,8 @@ async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "\n"
         "👉 প্রথমে অবশ্যই `/get` দিয়ে কিওয়ার্ড সেট করুন, না হলে বট কাজ করবে না!\n"
         "\n"
-        "_Created by Nazmul Hasan Nahin_"
-    , parse_mode="Markdown")
+        "_Created by Nazmul Hasan Nahin_", parse_mode="Markdown")
+
 
 async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -61,6 +65,8 @@ async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ দয়া করে কিওয়ার্ড/ডোমেইন দিন! যেমন: `/get example.com`", parse_mode="Markdown")
 
 # =========== File Handler ===========
+
+
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     keyword = user_keywords.get(user_id)
@@ -142,12 +148,16 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.warning(f"⚠️ Cleanup failed: {e}")
 
 # =========== Remove webhook ===========
+
+
 async def remove_webhook(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
     print("✅ Webhook removed (if any)")
 
 # =========== Main ===========
-def main():
+
+
+async def main():
     print("🤖 Bot is starting...")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -161,10 +171,11 @@ def main():
         handle_file
     ))
 
-    # Remove any existing webhook
-    asyncio.run(remove_webhook(app))
-
-    app.run_polling()
+    await app.initialize()
+    await app.start()
+    print("✅ Bot is running and polling...")
+    await app.updater.start_polling()
+    await app.updater.idle()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
