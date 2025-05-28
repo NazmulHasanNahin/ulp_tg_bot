@@ -7,7 +7,7 @@ from parser import process_zip_file
 from google_drive import upload_file_to_drive, create_shareable_link
 
 # =========== Bot Config ===========
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Make sure to use env variable in production
+BOT_TOKEN = "7804596940:AAGEiCQI8UKyeLrQMJ-UpTHrsSDHJ2N8l90"  # Make sure to use env variable in production
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 45 * 1024 * 1024  # 45MB
