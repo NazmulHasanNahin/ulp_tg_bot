@@ -1,6 +1,5 @@
 import os
 import zipfile
-import rarfile
 
 def process_zip_file(zip_path, keyword):
     extract_dir = "temp_extracted"
@@ -14,9 +13,7 @@ def process_zip_file(zip_path, keyword):
         if is_zip:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
-        elif is_rar:
-            with rarfile.RarFile(zip_path, 'r') as rar_ref:
-                rar_ref.extractall(extract_dir)
+        
         else:
             raise ValueError("Unsupported file type.")
 
