@@ -7,7 +7,6 @@ from parser import process_zip_file
 from google_drive import upload_file_to_drive, create_shareable_link
 
 # =========== Bot Config ===========
-# Make sure to use env variable in production
 BOT_TOKEN = "7804596940:AAGEiCQI8UKyeLrQMJ-UpTHrsSDHJ2N8l90"
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -25,7 +24,6 @@ user_keywords = {}
 
 # =========== Command Handlers ===========
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 হ্যালো!\n"
@@ -36,7 +34,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "\n"
         "_Created by Nazmul Hasan Nahin_"
     )
-
 
 async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -49,7 +46,6 @@ async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👉 প্রথমে অবশ্যই `/get` দিয়ে কিওয়ার্ড সেট করুন, না হলে বট কাজ করবে না!\n"
         "\n"
         "_Created by Nazmul Hasan Nahin_", parse_mode="Markdown")
-
 
 async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -65,7 +61,6 @@ async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ দয়া করে কিওয়ার্ড/ডোমেইন দিন! যেমন: `/get example.com`", parse_mode="Markdown")
 
 # =========== File Handler ===========
-
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -147,15 +142,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.warning(f"⚠️ Cleanup failed: {e}")
 
-# =========== Remove webhook ===========
-
-
-async def remove_webhook(app):
-    await app.bot.delete_webhook(drop_pending_updates=True)
-    print("✅ Webhook removed (if any)")
-
 # =========== Main ===========
-
 
 async def main():
     print("🤖 Bot is starting...")
@@ -175,7 +162,6 @@ async def main():
     await app.start()
     print("✅ Bot is running and polling...")
     await app.updater.start_polling()
-    await app.updater.idle()
 
 if __name__ == "__main__":
     asyncio.run(main())
