@@ -24,6 +24,7 @@ user_keywords = {}
 
 # =========== Command Handlers ===========
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 হ্যালো!\n"
@@ -34,6 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "\n"
         "_Created by Nazmul Hasan Nahin_"
     )
+
 
 async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -46,6 +48,7 @@ async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👉 প্রথমে অবশ্যই `/get` দিয়ে কিওয়ার্ড সেট করুন, না হলে বট কাজ করবে না!\n"
         "\n"
         "_Created by Nazmul Hasan Nahin_", parse_mode="Markdown")
+
 
 async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -61,6 +64,7 @@ async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ দয়া করে কিওয়ার্ড/ডোমেইন দিন! যেমন: `/get example.com`", parse_mode="Markdown")
 
 # =========== File Handler ===========
+
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -144,6 +148,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # =========== Main ===========
 
+
 async def main():
     print("🤖 Bot is starting...")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -158,10 +163,9 @@ async def main():
         handle_file
     ))
 
-    await app.initialize()
-    await app.start()
-    print("✅ Bot is running and polling...")
-    await app.updater.start_polling()
-
+    await app.run_polling()  # ✅ শুধু এই লাইনেই সব কাজ হবে
+    
+    
+    
 if __name__ == "__main__":
     asyncio.run(main())
