@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import nest_asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from parser import process_zip_file
@@ -24,18 +25,15 @@ user_keywords = {}
 
 # =========== Command Handlers ===========
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 হ্যালো!\n"
         "এই বটে ফাইল থেকে আপনার পছন্দের যেকোনো শব্দ বা ডোমেইন খুঁজে বের করতে পারবেন।\n"
         "প্রথমে /get [শব্দ/ডোমেইন] কমান্ড দিয়ে কিওয়ার্ড সেট করুন।\n"
         "তারপর .zip, .rar অথবা .txt ফাইল পাঠান।\n"
-        "ফিচার দেখতে /cmd লিখুন।"
-        "\n"
+        "ফিচার দেখতে /cmd লিখুন।\n\n"
         "_Created by Nazmul Hasan Nahin_"
     )
-
 
 async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -43,28 +41,24 @@ async def cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "1️⃣ `/get yourkeyword` - যেকোনো শব্দ/ডোমেইন সেট করুন (যেমন: `/get example.com`).\n"
         "2️⃣ আর্কাইভ (.zip/.rar) অথবা টেক্সট (.txt) ফাইল পাঠান, বট সেট করা কিওয়ার্ড অনুসন্ধান করবে।\n"
         "3️⃣ বড় ফাইল হলে অটো Google Drive-এ আপলোড হবে ও শেয়ার লিংক দিবে।\n"
-        "4️⃣ `/cmd` - এই নির্দেশিকা দেখুন।\n"
-        "\n"
-        "👉 প্রথমে অবশ্যই `/get` দিয়ে কিওয়ার্ড সেট করুন, না হলে বট কাজ করবে না!\n"
-        "\n"
-        "_Created by Nazmul Hasan Nahin_", parse_mode="Markdown")
-
+        "4️⃣ `/cmd` - এই নির্দেশিকা দেখুন।\n\n"
+        "👉 প্রথমে অবশ্যই `/get` দিয়ে কিওয়ার্ড সেট করুন, না হলে বট কাজ করবে না!\n\n"
+        "_Created by Nazmul Hasan Nahin_",
+        parse_mode="Markdown"
+    )
 
 async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
         keyword = " ".join(context.args).strip()
-        user_id = update.effective_user.id
-        user_keywords[user_id] = keyword
+        user_keywords[update.effective_user.id] = keyword
         await update.message.reply_text(
-            f"✅ এখন থেকে `{keyword}` খোঁজা হবে!\n"
-            f"এখন .zip, .rar অথবা .txt ফাইল পাঠান।",
+            f"✅ এখন থেকে `{keyword}` খোঁজা হবে!\nএখন .zip, .rar অথবা .txt ফাইল পাঠান।",
             parse_mode="Markdown"
         )
     else:
         await update.message.reply_text("⚠️ দয়া করে কিওয়ার্ড/ডোমেইন দিন! যেমন: `/get example.com`", parse_mode="Markdown")
 
 # =========== File Handler ===========
-
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -85,19 +79,12 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Large file upload to drive
         if file_size > MAX_FILE_SIZE:
             await update.message.reply_text("⚠️ ফাইলটি বড়, Google Drive-এ আপলোড করা হবে...")
-            try:
-                file_obj = await file.get_file()
-                await file_obj.download_to_drive(custom_path=file_path)
-                logger.info(f"📥 File downloaded: {file_path}")
-                drive_file_id = upload_file_to_drive(file_path)
-                link = create_shareable_link(drive_file_id)
-                await update.message.reply_text(f"📎 Google Drive লিংক:\n{link}")
-            except Exception as e:
-                logger.error("❌ Error uploading to Drive", exc_info=True)
-                await update.message.reply_text(f"❌ Google Drive-এ আপলোড সমস্যা :\n{str(e)}")
-            finally:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+            file_obj = await file.get_file()
+            await file_obj.download_to_drive(custom_path=file_path)
+            logger.info(f"📥 File downloaded: {file_path}")
+            drive_file_id = upload_file_to_drive(file_path)
+            link = create_shareable_link(drive_file_id)
+            await update.message.reply_text(f"📎 Google Drive লিংক:\n{link}")
             return
 
         # Normal processing
@@ -106,10 +93,8 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await file_obj.download_to_drive(custom_path=file_path)
         await update.message.reply_text(f"📂 ফাইল `{file_name}` প্রসেস করা হচ্ছে...", parse_mode="Markdown")
 
-        result_file = None
-        count = 0
-
-        if file_name.endswith(".zip") or file_name.endswith(".rar"):
+        result_file, count = None, 0
+        if file_name.endswith((".zip", ".rar")):
             result_file, count = process_zip_file(file_path, keyword)
         elif file_name.endswith(".txt"):
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -125,7 +110,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(f"✅ `{keyword}` পাওয়া গেছে {count} বার।", parse_mode="Markdown")
 
-        # Result file handling
         if result_file and os.path.getsize(result_file) > MAX_FILE_SIZE:
             drive_file_id = upload_file_to_drive(result_file)
             link = create_shareable_link(drive_file_id)
@@ -137,17 +121,16 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error("❌ File processing error", exc_info=True)
         await update.message.reply_text(f"❌ সমস্যা হয়েছে:\n{str(e)}")
+
     finally:
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            if 'result_file' in locals() and result_file and os.path.exists(result_file):
-                os.remove(result_file)
-        except Exception as e:
-            logger.warning(f"⚠️ Cleanup failed: {e}")
+        for file_path_to_clean in [file_path, result_file]:
+            if file_path_to_clean and os.path.exists(file_path_to_clean):
+                try:
+                    os.remove(file_path_to_clean)
+                except Exception as e:
+                    logger.warning(f"⚠️ Cleanup failed: {e}")
 
 # =========== Main ===========
-
 
 async def main():
     print("🤖 Bot is starting...")
@@ -163,21 +146,16 @@ async def main():
         handle_file
     ))
 
-    await app.run_polling()  # ✅ শুধু এই লাইনেই সব কাজ হবে
-    
-    
-    
-import asyncio
-import nest_asyncio
+    await app.run_polling()
+
+# =========== Entry Point (Render-compatible) ===========
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except RuntimeError as e:
         if "This event loop is already running" in str(e):
-            
             nest_asyncio.apply()
             asyncio.get_event_loop().run_until_complete(main())
         else:
             raise
-
