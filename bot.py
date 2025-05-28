@@ -150,12 +150,20 @@ async def main():
 
 # =========== Entry Point (Render-compatible) ===========
 
+import asyncio
+import nest_asyncio
+
+import sys
+
+from bot import main  # যদি সব কোড এক ফাইলে থাকে তাহলে শুধু main() রাখলেই হবে
+
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except RuntimeError as e:
         if "This event loop is already running" in str(e):
             nest_asyncio.apply()
-            asyncio.get_event_loop().run_until_complete(main())
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(main())
         else:
             raise
