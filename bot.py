@@ -1,12 +1,13 @@
 import os
 import logging
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from parser import process_zip_file
 from google_drive import upload_file_to_drive, create_shareable_link
 
 # =========== Bot Config ===========
-BOT_TOKEN = "7804596940:AAGEiCQI8UKyeLrQMJ-UpTHrsSDHJ2N8l90"
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Make sure to use env variable in production
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 45 * 1024 * 1024  # 45MB
@@ -53,8 +54,7 @@ async def set_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_keywords[user_id] = keyword
         await update.message.reply_text(
             f"✅ এখন থেকে `{keyword}` খোঁজা হবে!\n"
-            f"এখন .zip, .rar অথবা .txt ফাইল পাঠান।\n"
-            f"আপনি চাইলে পরবর্তীতে আবার /get দিয়ে নতুন কিওয়ার্ড সেট করতে পারবেন।",
+            f"এখন .zip, .rar অথবা .txt ফাইল পাঠান।",
             parse_mode="Markdown"
         )
     else:
@@ -141,20 +141,28 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.warning(f"⚠️ Cleanup failed: {e}")
 
+# =========== Remove webhook ===========
+async def remove_webhook(app):
+    await app.bot.delete_webhook(drop_pending_updates=True)
+    print("✅ Webhook removed (if any)")
+
 # =========== Main ===========
 def main():
     print("🤖 Bot is starting...")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("cmd", cmd))      # Show features & commands
-    app.add_handler(CommandHandler("get", set_keyword))   # Set search keyword
+    app.add_handler(CommandHandler("cmd", cmd))
+    app.add_handler(CommandHandler("get", set_keyword))
     app.add_handler(MessageHandler(
         filters.Document.FileExtension("zip")
         | filters.Document.FileExtension("rar")
         | filters.Document.FileExtension("txt"),
         handle_file
     ))
+
+    # Remove any existing webhook
+    asyncio.run(remove_webhook(app))
 
     app.run_polling()
 
